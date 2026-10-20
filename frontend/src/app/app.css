@@ -1,0 +1,11 @@
+po-button[p-kind="primary"] {
+--border-color: #111c74;
+--padding: 14px;
+margin-bottom: 2rem;
+}
+
+form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}

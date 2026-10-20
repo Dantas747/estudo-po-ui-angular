@@ -1,10 +1,64 @@
 <div class="po-wrapper">
-  <po-toolbar p-title="AppName"></po-toolbar>
-
+  <po-toolbar p-title="Minha Aplicação PO-UI"></po-toolbar>
   <po-menu [p-menus]="menus"></po-menu>
 
-  <po-page-default p-title="AppName">
-    <p>AppName page</p>
+  <po-page-default p-title="Cadastro de Usuário">
+    <p>Preencha os dados do usuário abaixo. Todos os campos são obrigatórios.</p>
 
+    <form #formulario="ngForm" (ngSubmit)="salvar(formulario)">
+      <!-- Monta o label para nome -->
+      <po-input
+        name="nome"
+        p-label="Nome"
+        p-placeholder="Digite seu nome"
+        p-required
+        p-pattern=".*\S.*"
+        p-field-error-message="Informe um nome válido."
+        [(ngModel)]="usuario.nome"
+      ></po-input>
+
+      <!-- Monta o label para e-mail -->
+      <po-email
+        name="email"
+        p-label="E-mail do Usuário"
+        p-placeholder="Digite seu e-mail"
+        p-required
+        [(ngModel)]="usuario.email"
+      ></po-email>
+
+      <!-- Monta o label para telefone -->
+      <po-input
+        name="telefone"
+        p-label="Celular do Usuário"
+        p-placeholder="Digite o DDD e o número"
+        p-mask="(99) 99999-9999"
+        p-mask-format-model="true"
+        p-field-error-message="Informe o celular com DDD e 11 dígitos."
+        p-required
+        [(ngModel)]="usuario.telefone"
+      ></po-input>
+
+      <!-- Botão de salvar -->
+      <po-button
+        p-label="Salvar"
+        p-kind="primary"
+        [p-disabled]="formulario.invalid === true"
+        (p-click)="salvar(formulario)"
+      ></po-button>
+    </form>
+
+    <!-- Exibe a mensagem de status -->
+    <p role="status" aria-live="polite">{{ mensagem }}</p>
+
+    <!-- Exibe o último usuário salvo -->
+    @if (usuarioSalvo; as salvo) {
+      <section aria-label="Último usuário salvo">
+        <h2>Último usuário salvo</h2>
+        <p><strong>Nome:</strong> {{ salvo.nome }}</p>
+        <p><strong>E-mail:</strong> {{ salvo.email }}</p>
+        <p><strong>Celular:</strong> {{ salvo.telefone }}</p>
+      </section>
+    }
+    <p><i class="fa fa-italic" aria-hidden="true">Etapa de estudo: os dados ficam em memória e são perdidos ao atualizar a página.</i></p>
   </po-page-default>
 </div>
