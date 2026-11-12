@@ -1,7 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { Component } from '@angular/core';
 import { FormsModule, NgForm } from '@angular/forms';
-import { PoMenuItem, PoMenuModule, PoPageModule, PoToolbarModule, PoButtonModule, PoFieldModule } from '@po-ui/ng-components';
+import { PoMenuItem, PoMenuModule, PoPageModule, PoToolbarModule, PoButtonModule, PoFieldModule, PoTableModule } from '@po-ui/ng-components';
 
 interface Usuario {
   nome: string;
@@ -11,14 +11,14 @@ interface Usuario {
 
 @Component({
   selector: 'app-root',
-  imports: [CommonModule, FormsModule, PoToolbarModule, PoMenuModule, PoPageModule, PoButtonModule, PoFieldModule],
+  imports: [CommonModule, FormsModule, PoToolbarModule, PoMenuModule, PoPageModule, PoButtonModule, PoFieldModule, PoTableModule],
   templateUrl: './app.html',
   styleUrls: ['./app.css'],
 })
 export class App {
   readonly menus: Array<PoMenuItem> = [{ label: 'Home' }];
   usuario: Usuario = { nome: '', email: '', telefone: '' };
-  usuarioSalvo: Usuario | null = null;
+  usuarios: Usuario[] = [];
   mensagem = '';
 
   salvar(formulario: NgForm): void {
@@ -30,12 +30,15 @@ export class App {
       return;
     }
 
-    this.usuarioSalvo = {
+    this.usuarios.push({
       nome: this.usuario.nome.trim(),
       email: this.usuario.email.trim(),
       telefone: this.usuario.telefone,
-    };
+    });
     this.mensagem = 'Usuário salvo em memória com sucesso.';
     formulario.resetForm({ nome: '', email: '', telefone: '' });
   }
 }
+
+
+

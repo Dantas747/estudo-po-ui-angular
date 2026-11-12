@@ -51,13 +51,15 @@
     <p role="status" aria-live="polite">{{ mensagem }}</p>
 
     <!-- Exibe o último usuário salvo -->
-    @if (usuarioSalvo; as salvo) {
-      <section aria-label="Último usuário salvo">
-        <h2>Último usuário salvo</h2>
-        <p><strong>Nome:</strong> {{ salvo.nome }}</p>
-        <p><strong>E-mail:</strong> {{ salvo.email }}</p>
-        <p><strong>Celular:</strong> {{ salvo.telefone }}</p>
-      </section>
+    <!-- Lista todos os usuários cadastrados -->
+    @if (usuarios.length > 0) {
+    <section aria-label="Usuários cadastrados">
+      <h2>Usuários cadastrados</h2>
+
+      <po-table
+        [p-items]="usuarios"
+      ></po-table>
+    </section>
     }
     <p><i class="fa fa-italic" aria-hidden="true">Etapa de estudo: os dados ficam em memória e são perdidos ao atualizar a página.</i></p>
   </po-page-default>
