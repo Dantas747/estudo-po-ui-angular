@@ -1,1 +1,6 @@
 /* You can add global styles to this file, and also import other style files */
+
+/* Cor do cabeçalho da tabela de usuários. */
+po-table.tabela-usuarios {
+  --background-color-headline: #dbeafe;
+}

@@ -1,7 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { Component } from '@angular/core';
 import { FormsModule, NgForm } from '@angular/forms';
-import { PoMenuItem, PoMenuModule, PoPageModule, PoToolbarModule, PoButtonModule, PoFieldModule, PoTableModule } from '@po-ui/ng-components';
+import { PoMenuItem, PoMenuModule, PoPageModule, PoToolbarModule, PoButtonModule, PoFieldModule, PoTableColumn, PoTableModule } from '@po-ui/ng-components';
 
 interface Usuario {
   nome: string;
@@ -16,6 +16,11 @@ interface Usuario {
   styleUrls: ['./app.css'],
 })
 export class App {
+  readonly colunasUsuarios: Array<PoTableColumn> = [
+    { property: 'nome', label: 'Nome completo' },
+    { property: 'email', label: 'Endereço eletrônico' },
+    { property: 'telefone', label: 'Celular / WhatsApp' }
+  ];
   readonly menus: Array<PoMenuItem> = [{ label: 'Home' }];
   usuario: Usuario = { nome: '', email: '', telefone: '' };
   usuarios: Usuario[] = [];
@@ -38,6 +43,7 @@ export class App {
     this.mensagem = 'Usuário salvo em memória com sucesso.';
     formulario.resetForm({ nome: '', email: '', telefone: '' });
   }
+
 }
 
 
