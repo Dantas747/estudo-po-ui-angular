@@ -1,11 +1,19 @@
 po-button[p-kind="primary"] {
 --border-color: #111c74;
 --padding: 14px;
-margin-bottom: 2rem;
+
 }
 
 form {
   display: flex;
   flex-direction: column;
+  gap: 0.75rem;
+}
+
+/* Organiza os botões de cadastro na mesma linha. */
+.acoes-usuario {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
   gap: 0.75rem;
 }

@@ -38,14 +38,45 @@
         [(ngModel)]="usuario.telefone"
       ></po-input>
 
-      <!-- Botão de salvar -->
-      <po-button
-        p-label="Salvar"
-        p-kind="primary"
-        [p-disabled]="formulario.invalid === true"
-        (p-click)="salvar(formulario)"
-      ></po-button>
+      <div class="acoes-usuario">
+        <!-- Botão para incluir ou salvar a alteração do usuário -->
+        <po-button
+          [p-label]="usuarioEmEdicao !== null ? 'Salvar alteração' : 'Incluir'"
+          p-kind="primary"
+          [p-disabled]="formulario.invalid === true"
+          (p-click)="salvar(formulario)"
+        ></po-button>
+
+        <!-- Botão de Alterar -->
+        <po-button
+          p-label="Alterar"
+          (p-click)="alterarSelecionado()"
+        ></po-button>
+
+        <!-- Botão de Excluir -->
+        <po-button
+          p-label="Excluir"
+          p-kind="danger"
+          (p-click)="excluirSelecionados()"
+        ></po-button>
+      </div>
+
     </form>
+
+    <!-- Campo de pesquisa de usuários -->
+    <po-input
+      name="filtroNome"
+      p-label="Pesquisar usuário"
+      p-placeholder="Digite parte do nome"
+      [(ngModel)]="filtroNome"
+    ></po-input>
+
+    <!-- Botão para verificar usuários selecionados -->
+    <po-button
+      p-label="Verificar selecionados"
+      (p-click)="verificarSelecionados()"
+    ></po-button>
+
 
     <!-- Exibe a mensagem de status -->
     <p role="status" aria-live="polite">{{ mensagem }}</p>
@@ -55,12 +86,12 @@
     @if (usuarios.length > 0) {
     <section aria-label="Usuários cadastrados">
       <h2>Usuários cadastrados</h2>
-
-      <po-table
-        class="tabela-usuarios"
-        [p-columns]="colunasUsuarios"
-        [p-items]="usuarios"
-      ></po-table>
+        <po-table
+          [p-columns]="colunasUsuarios"
+          [p-items]="usuariosFiltrados"
+          [p-sort]="true"
+          [p-selectable]="true"
+        ></po-table>
     </section>
     }
     <p><i class="fa fa-italic" aria-hidden="true">Etapa de estudo: os dados ficam em memória e são perdidos ao atualizar a página.</i></p>
