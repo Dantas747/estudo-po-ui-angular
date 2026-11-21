@@ -1,0 +1,139 @@
+name: Atualizar progresso do estudo de PO UI
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: progresso-po-ui-google-docs
+  cancel-in-progress: false
+
+jobs:
+  atualizar:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 10
+          persist-credentials: false
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          package-manager-cache: false
+      - name: Instalar dependências
+        id: install
+        working-directory: frontend
+        run: npm ci
+      - name: Compilar frontend
+        id: build
+        if: ${{ !cancelled() && steps.install.outcome == 'success' }}
+        working-directory: frontend
+        run: npm run build
+      - name: Executar testes do frontend
+        id: tests
+        if: ${{ !cancelled() && steps.install.outcome == 'success' }}
+        working-directory: frontend
+        run: npm test -- --watch=false
+      - name: Verificar configuração do Google Docs
+        id: config
+        if: ${{ !cancelled() }}
+        env:
+          DOC_ID: ${{ vars.PO_UI_GOOGLE_DOC_ID }}
+          GOOGLE_SERVICE_ACCOUNT: ${{ vars.PO_UI_GOOGLE_SERVICE_ACCOUNT }}
+          GOOGLE_CREDENTIALS: ${{ secrets.PO_UI_GOOGLE_CREDENTIALS }}
+        run: |
+          test -n "$DOC_ID" || { echo 'Configure a variável PO_UI_GOOGLE_DOC_ID.'; exit 1; }
+          test -n "$GOOGLE_SERVICE_ACCOUNT" || { echo 'Configure a variável PO_UI_GOOGLE_SERVICE_ACCOUNT.'; exit 1; }
+          test -n "$GOOGLE_CREDENTIALS" || { echo 'Configure o secret PO_UI_GOOGLE_CREDENTIALS.'; exit 1; }
+      - name: Autenticar no Google
+        id: google
+        if: ${{ !cancelled() && steps.config.outcome == 'success' }}
+        uses: google-github-actions/auth@v3
+        with:
+          credentials_json: ${{ secrets.PO_UI_GOOGLE_CREDENTIALS }}
+          service_account: ${{ vars.PO_UI_GOOGLE_SERVICE_ACCOUNT }}
+          token_format: access_token
+          access_token_scopes: https://www.googleapis.com/auth/documents
+          create_credentials_file: false
+          export_environment_variables: false
+      - name: Atualizar documento de progresso
+        if: ${{ !cancelled() && steps.google.outcome == 'success' }}
+        env:
+          DOC_ID: ${{ vars.PO_UI_GOOGLE_DOC_ID }}
+          GOOGLE_ACCESS_TOKEN: ${{ steps.google.outputs.access_token }}
+          INSTALL_STATUS: ${{ steps.install.outcome }}
+          BUILD_STATUS: ${{ steps.build.outcome }}
+          TEST_STATUS: ${{ steps.tests.outcome }}
+          STUDY_NOTES: ${{ vars.PO_UI_NOTAS_ESTUDO }}
+        run: |
+          python3 - <<'PY'
+          import json
+          import os
+          import re
+          import subprocess
+          from datetime import datetime
+          from urllib.error import HTTPError
+          from urllib.request import Request, urlopen
+          from zoneinfo import ZoneInfo
+
+          marker = 'Estudo de PO UI + Angular | Progresso automático'
+          document_id = os.environ['DOC_ID']
+          if not re.fullmatch(r'[A-Za-z0-9_-]+', document_id):
+              raise SystemExit('Informe somente o ID do documento em PO_UI_GOOGLE_DOC_ID.')
+          url = f'https://docs.googleapis.com/v1/documents/{document_id}'
+
+          def request(suffix='', data=None):
+              headers = {'Authorization': 'Bearer ' + os.environ['GOOGLE_ACCESS_TOKEN']}
+              if data is not None:
+                  headers['Content-Type'] = 'application/json'
+                  data = json.dumps(data).encode('utf-8')
+              try:
+                  with urlopen(Request(url + suffix, data=data, headers=headers), timeout=30) as response:
+                      return json.load(response)
+              except HTTPError as error:
+                  raise SystemExit(f'A API do Google Docs retornou HTTP {error.code} em {suffix or "documents.get"}.') from None
+
+          document = request()
+          contents = document['body']['content']
+          first_line = ''.join(
+              element.get('textRun', {}).get('content', '')
+              for element in next((item['paragraph']['elements'] for item in contents if 'paragraph' in item), [])
+          ).rstrip('\n')
+          if first_line != marker:
+              raise SystemExit('O título da primeira linha deve identificar o documento exclusivo da automação.')
+
+          statuses = {'success': 'passou', 'failure': 'falhou', 'skipped': 'não executado'}
+          repository = f"{os.environ['GITHUB_SERVER_URL']}/{os.environ['GITHUB_REPOSITORY']}"
+          updated = datetime.now(ZoneInfo('America/Cuiaba')).strftime('%d/%m/%Y às %H:%M')
+          commits = subprocess.check_output(
+              ['git', 'log', '-10', '--format=%h %s', 'HEAD'], encoding='utf-8'
+          ).splitlines()
+          lines = [
+              marker, '', f'Atualizado em {updated} (Cuiabá)',
+              f"Versão verificada: {repository}/commit/{os.environ['GITHUB_SHA']}",
+              f"Execução: {repository}/actions/runs/{os.environ['GITHUB_RUN_ID']}", '',
+              'Validações do frontend',
+          ]
+          for label, key in [('Instalação', 'INSTALL_STATUS'), ('Compilação', 'BUILD_STATUS'), ('Testes', 'TEST_STATUS')]:
+              lines.append(f'{label}: {statuses.get(os.environ[key], os.environ[key])}')
+          lines.extend(['', 'Commits recentes', *[f'• {commit}' for commit in commits]])
+          notes = os.environ['STUDY_NOTES'].strip()
+          if notes:
+              lines.extend(['', 'Decisões, pendências e próximos exercícios', notes])
+
+          end_index = contents[-1]['endIndex'] - 1
+          request(':batchUpdate', {
+              'writeControl': {'requiredRevisionId': document['revisionId']},
+              'requests': [
+                  {'deleteContentRange': {'range': {'startIndex': 1, 'endIndex': end_index}}},
+                  {'insertText': {'location': {'index': 1}, 'text': '\n'.join(lines)}},
+              ],
+          })
+          print('Documento de progresso atualizado.')
+          PY

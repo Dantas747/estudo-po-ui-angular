@@ -35,6 +35,21 @@ export class App {
   readonly menus: Array<PoMenuItem> = [{ label: 'Home' }];
   usuario: Usuario = { nome: '', email: '', telefone: '' };
   usuarios: Usuario[] = [];
+
+  ngOnInit(): void {
+    const dados = localStorage.getItem('usuarios');
+
+    if (dados) {
+      this.usuarios = JSON.parse(dados);
+    }
+  }
+
+  salvarUsuarios(): void {
+    localStorage.setItem(
+      'usuarios',
+      JSON.stringify(this.usuarios)
+    );
+  }
   mensagem = '';
   // Filtro para pesquisa de usuários
   filtroNome: string = '';
@@ -73,6 +88,7 @@ export class App {
     } else {
       // Inclusão — adiciona um novo usuário à lista.
       this.usuarios.push(dados);
+      this.salvarUsuarios();
       this.mensagem = 'Usuário incluído com sucesso.';
     }
 
